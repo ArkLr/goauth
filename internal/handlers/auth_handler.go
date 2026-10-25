@@ -31,6 +31,7 @@ type pageData struct {
 	Success   string
 	CSRFToken string
 	ExpiresAt time.Time
+	UserId    int64
 }
 
 type AuthHandler struct {
@@ -239,6 +240,7 @@ func (h *AuthHandler) Protected(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.render(w, http.StatusOK, "protected.html", pageData{
+		UserId:    s.UserId,
 		Email:     user.Email,
 		CSRFToken: s.CSRFToken,
 		ExpiresAt: s.ExpiresAt,
