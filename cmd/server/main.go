@@ -9,6 +9,7 @@ import (
 	"github.com/Arklr/goauth/internal/config"
 	"github.com/Arklr/goauth/internal/database"
 	"github.com/Arklr/goauth/internal/handlers"
+	"github.com/Arklr/goauth/internal/repository"
 )
 
 func main() {
@@ -24,6 +25,10 @@ func main() {
 	defer pool.Close()
 
 	fmt.Println("Conncted")
+
+	userRepo := repository.NewUserRepository(pool)
+	sessionRepo := repository.NewSessionRepository(pool)
+	_, _ = userRepo, sessionRepo
 
 	mux := http.NewServeMux()
 
