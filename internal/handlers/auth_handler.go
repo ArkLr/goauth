@@ -28,7 +28,7 @@ const (
 type pageData struct {
 	Error     string
 	Email     string
-	Notice    string
+	Success   string
 	CSRFToken string
 	ExpiresAt time.Time
 }
@@ -84,7 +84,7 @@ func (h *AuthHandler) RegisterPage(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) LoginPage(w http.ResponseWriter, r *http.Request) {
 	data := pageData{}
 	if r.URL.Query().Get("registered") == "1" {
-		data.Notice = "Account created. Please log in."
+		data.Success = "Account created. Please log in."
 	}
 	h.render(w, http.StatusOK, "login.html", data)
 }

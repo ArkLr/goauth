@@ -25,7 +25,9 @@ func main() {
 	}
 	defer pool.Close()
 
-	fmt.Println("Conncted")
+	addr := fmt.Sprintf("127.0.0.1:%d", cfg.Port)
+
+	fmt.Println("Connected")
 
 	userRepo := repository.NewUserRepository(pool)
 	sessionRepo := repository.NewSessionRepository(pool)
@@ -55,6 +57,6 @@ func main() {
 
 	// protected
 	mux.Handle("GET /protected", requireAuth(http.HandlerFunc(auth.Protected)))
-	log.Println("listening on :8080")
+	log.Println("listening on :8080", addr)
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
