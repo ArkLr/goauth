@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"net/mail"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/Arklr/goauth/internal/middleware"
