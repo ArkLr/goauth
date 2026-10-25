@@ -28,14 +28,13 @@ func main() {
 
 	userRepo := repository.NewUserRepository(pool)
 	sessionRepo := repository.NewSessionRepository(pool)
-	_, _ = userRepo, sessionRepo
+	auth := handlers.NewAuthHandler(userRepo, sessionRepo)
 
 	mux := http.NewServeMux()
-
-	mux.HandleFunc("/register", handlers.Register)
-	mux.HandleFunc("/login", handlers.Login)
-	mux.HandleFunc("/logout", handlers.Logout)
-	mux.HandleFunc("/protected", handlers.Protected)
+	mux.HandleFunc("POST /register", auth.Register)
+	mux.HandleFunc("POST /login", auth.Login)
+	mux.HandleFunc("POST /logout", auth.Logout)
+	mux.HandleFunc("GET /protected", auth.Protected)
 
 	log.Println("listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", mux))
