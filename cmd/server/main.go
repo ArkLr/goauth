@@ -37,11 +37,24 @@ func main() {
 	requireAuth := middleware.RequireAuth(sessionRepo, cfg.CookieSecure)
 
 	mux := http.NewServeMux()
+
+	// static files (CSS)
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
+
+	// pages
+	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+	})
+	mux.HandleFunc("GET /register", auth.RegisterPage)
+	mux.HandleFunc("GET /login", auth.LoginPage)
+
+	// actions
 	mux.HandleFunc("POST /register", auth.Register)
 	mux.HandleFunc("POST /login", auth.Login)
 	mux.HandleFunc("POST /logout", auth.Logout)
-	mux.Handle("GET /protected", requireAuth(http.HandlerFunc(auth.Protected)))
 
+	// protected
+	mux.Handle("GET /protected", requireAuth(http.HandlerFunc(auth.Protected)))
 	log.Println("listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
