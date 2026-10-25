@@ -9,10 +9,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Arklr/goauth/internal/middleware"
 	"github.com/Arklr/goauth/internal/models"
 	"github.com/Arklr/goauth/internal/repository"
 	"github.com/Arklr/goauth/internal/security"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/Arklr/goauth/internal/cookies"
 )
 
 const (
@@ -155,25 +158,31 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     sessionCookieName,
-		Value:    token,
-		Path:     "/",
-		Expires:  expires,
-		MaxAge:   int(sessionTTL.Seconds()),
-		HttpOnly: true,
-		Secure:   h.secureCookies,
-		SameSite: http.SameSiteLaxMode,
-	})
+	cookies.SetSession(w, token, expires, h.secureCookies)
 
 	fmt.Fprintf(w, "logged in\ncsrf_token: %s\n", csrfToken)
 
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("logout\n"))
+	if c, err := r.Cookie(cookies.SessionName); err == nil && c.Value != "" {
+		err := h.sessions.Delete(r.Context(), security.HashToken(c.Value))
+		if err != nil {
+			log.Printf("delete session: %v", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	cookies.ClearSession(w, h.secureCookies)
+	fmt.Fprintln(w, "logged out")
 }
 
 func (h *AuthHandler) Protected(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("protected\n"))
+	s, ok := middleware.SessionFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	fmt.Fprintf(w, "hello, user %d\n", s.UserId)
 }

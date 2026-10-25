@@ -9,6 +9,7 @@ import (
 	"github.com/Arklr/goauth/internal/config"
 	"github.com/Arklr/goauth/internal/database"
 	"github.com/Arklr/goauth/internal/handlers"
+	"github.com/Arklr/goauth/internal/middleware"
 	"github.com/Arklr/goauth/internal/repository"
 )
 
@@ -33,11 +34,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	requireAuth := middleware.RequireAuth(sessionRepo, cfg.CookieSecure)
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /register", auth.Register)
 	mux.HandleFunc("POST /login", auth.Login)
 	mux.HandleFunc("POST /logout", auth.Logout)
-	mux.HandleFunc("GET /protected", auth.Protected)
+	mux.Handle("GET /protected", requireAuth(http.HandlerFunc(auth.Protected)))
 
 	log.Println("listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", mux))
