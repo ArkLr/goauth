@@ -28,7 +28,10 @@ func main() {
 
 	userRepo := repository.NewUserRepository(pool)
 	sessionRepo := repository.NewSessionRepository(pool)
-	auth := handlers.NewAuthHandler(userRepo, sessionRepo)
+	auth, err := handlers.NewAuthHandler(userRepo, sessionRepo, cfg.CookieSecure)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /register", auth.Register)

@@ -7,10 +7,11 @@ import (
 )
 
 type Config struct {
-	DBURL    string
-	Port     int
-	Username string
-	Password string
+	DBURL        string
+	Port         int
+	Username     string
+	Password     string
+	CookieSecure bool
 }
 
 func Load() (*Config, error) {
@@ -29,9 +30,10 @@ func Load() (*Config, error) {
 	}
 
 	return &Config{
-		DBURL:    dburl,
-		Port:     port,
-		Username: os.Getenv("USERNAME"),
-		Password: os.Getenv("PASSWORD"),
+		DBURL:        dburl,
+		Port:         port,
+		Username:     os.Getenv("USERNAME"),
+		Password:     os.Getenv("PASSWORD"),
+		CookieSecure: os.Getenv("COOKIE_SECURE") != "false",
 	}, nil
 }
