@@ -1,7 +1,5 @@
 BEGIN;
 
-CREATE TYPE post_status AS ENUM ('created', 'deleted', 'updated', 'removed');
-
 CREATE TABLE IF NOT EXISTS posts (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
        user_id    BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
