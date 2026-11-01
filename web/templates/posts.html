@@ -3,63 +3,77 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Posts</title>
+		<title>Posts · GoAuth</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" />
 		<link rel="stylesheet" href="/static/style.css" />
 	</head>
 	<body>
 		<main class="card wide">
-			<h1>Posts</h1>
-			<p><a href="/protected">Dashboard</a></p>
+			<div class="card-body">
+				<a class="back-link" href="/protected">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="m15 18-6-6 6-6" />
+					</svg>
+					Dashboard
+				</a>
 
-			{{with .Error}}
-			<p class="error">{{.}}</p>
-			{{end}}
+				<h1>Posts</h1>
+				<p class="subtitle">Share something with everyone signed in.</p>
 
-			<form method="POST" action="/posts">
-				<input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
-				<input
-					type="text"
-					name="headline"
-					placeholder="Headline"
-					maxlength="200"
-					value="{{.Headline}}"
-					required
-				/>
-				<textarea name="body" placeholder="..." rows="4" required>
-{{.Body}}</textarea
-				>
-				<button type="submit" class="btn">Post</button>
-			</form>
-
-			<hr />
-
-			{{range .Posts}}
-			<article>
-				<h2>{{.Headline}}</h2>
-				<p>{{.Body}}</p>
-				<small>
-					by user #{{.UserId}} · {{.CreatedAt.Format "Jan 2, 2006 15:04"}} {{if
-					ne .UpdatedAt .CreatedAt}}(edited){{end}}
-				</small>
-
-				{{if eq .UserId $.CurrentUserId}}
-				<div>
-					<a href="/posts/{{.Id}}/edit">Edit</a>
-					<form
-						method="POST"
-						action="/posts/{{.Id}}/delete"
-						style="display: inline"
-						onsubmit="return confirm('Delete this post?');"
-					>
-						<input type="hidden" name="csrf_token" value="{{$.CSRFToken}}" />
-						<button type="submit" class="btn btn-outline">Delete</button>
-					</form>
+				{{with .Error}}
+				<div class="alert alert-error" role="alert">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<circle cx="12" cy="12" r="10" />
+						<path d="M12 8v4M12 16h.01" />
+					</svg>
+					<span>{{.}}</span>
 				</div>
 				{{end}}
-			</article>
-			{{else}}
-			<p>No posts yet.</p>
-			{{end}}
+
+				<form method="POST" action="/posts">
+					<input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
+
+					<div class="field">
+						<label for="headline">Headline</label>
+						<input type="text" id="headline" name="headline" placeholder="What's it about?" maxlength="200" value="{{.Headline}}" required />
+					</div>
+
+					<div class="field">
+						<label for="body">Body</label>
+						<textarea id="body" name="body" placeholder="Write your post..." rows="4" required>{{.Body}}</textarea>
+					</div>
+
+					<button type="submit" class="btn btn-primary">Publish post</button>
+				</form>
+			</div>
+
+			<div class="card-section">
+				{{range .Posts}}
+				<article class="post">
+					<h2>{{.Headline}}</h2>
+					<p class="post-body">{{.Body}}</p>
+					<div class="post-meta">
+						<span>
+							User #{{.UserId}} · {{.CreatedAt.Format "Jan 2, 2006 · 15:04"}}{{if ne .UpdatedAt .CreatedAt}} · edited{{end}}
+						</span>
+
+						{{if eq .UserId $.CurrentUserId}}
+						<div class="post-actions">
+							<a href="/posts/{{.Id}}/edit" class="btn btn-outline btn-sm">Edit</a>
+							<form method="POST" action="/posts/{{.Id}}/delete" onsubmit="return confirm('Delete this post?');">
+								<input type="hidden" name="csrf_token" value="{{$.CSRFToken}}" />
+								<button type="submit" class="btn btn-outline btn-sm btn-danger">Delete</button>
+							</form>
+						</div>
+						{{end}}
+					</div>
+				</article>
+				{{else}}
+				<p class="empty">No posts yet. Be the first to write one.</p>
+				{{end}}
+			</div>
 		</main>
 	</body>
 </html>

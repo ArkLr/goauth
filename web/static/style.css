@@ -177,16 +177,38 @@ input[type="text"] {
 		box-shadow 0.15s;
 }
 
-input:hover {
+textarea {
+	display: block;
+	width: 100%;
+	min-height: 112px;
+	padding: 12px 14px;
+	font: inherit;
+	font-size: 0.95rem;
+	line-height: 1.5;
+	color: var(--text);
+	background: transparent;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	outline: none;
+	resize: vertical;
+	transition:
+		border-color 0.15s,
+		box-shadow 0.15s;
+}
+
+input:hover,
+textarea:hover {
 	border-color: var(--border-hover);
 }
 
-input:focus {
+input:focus,
+textarea:focus {
 	border-color: #6b6b6b;
 	box-shadow: 0 0 0 3px var(--ring);
 }
 
-input::placeholder {
+input::placeholder,
+textarea::placeholder {
 	color: var(--placeholder);
 }
 
@@ -369,6 +391,92 @@ input::placeholder {
 	overflow-wrap: anywhere;
 }
 
+/* ---------- Posts ---------- */
+
+.back-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-bottom: 20px;
+	font-size: 0.85rem;
+	font-weight: 500;
+	color: var(--muted);
+	text-decoration: none;
+}
+
+.back-link:hover {
+	color: var(--text);
+}
+
+.card-section {
+	border-top: 1px solid var(--card-border);
+}
+
+.post {
+	padding: 24px 32px;
+}
+
+.post + .post {
+	border-top: 1px solid var(--card-border);
+}
+
+.post h2 {
+	margin: 0 0 8px;
+	font-size: 1.1rem;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	overflow-wrap: anywhere;
+}
+
+.post-body {
+	margin: 0 0 16px;
+	color: var(--muted);
+	line-height: 1.6;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.post-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	font-size: 0.8rem;
+	color: var(--placeholder);
+}
+
+.post-actions {
+	display: flex;
+	gap: 8px;
+}
+
+.post-actions form {
+	margin: 0;
+}
+
+.btn-sm {
+	width: auto;
+	height: 32px;
+	padding: 0 12px;
+	font-size: 0.8rem;
+	border-radius: 8px;
+}
+
+.btn-danger:hover {
+	color: var(--error-text);
+	background: var(--error-bg);
+	border-color: var(--error-border);
+}
+
+.empty {
+	margin: 0;
+	padding: 32px;
+	text-align: center;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+
 @media (max-width: 480px) {
 	.card-body {
 		padding: 28px 20px;
@@ -376,6 +484,10 @@ input::placeholder {
 
 	.card-footer {
 		padding: 16px 20px;
+	}
+
+	.post {
+		padding: 20px;
 	}
 
 	h1 {
