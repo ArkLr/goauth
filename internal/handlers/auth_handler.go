@@ -32,17 +32,23 @@ type pageData struct {
 	CSRFToken string
 	ExpiresAt time.Time
 	UserId    int64
+
+	// dashboard only
+	MemberSince time.Time
+	PostCount   int64
+	RecentPosts []models.Post
 }
 
 type AuthHandler struct {
 	users         *repository.UserRepository
 	sessions      *repository.SessionRepository
+	posts         *repository.PostRepository
 	tmpl          *template.Template
 	secureCookies bool
 	dummyHash     []byte
 }
 
-func NewAuthHandler(users *repository.UserRepository, sessions *repository.SessionRepository, secureCookies bool) (*AuthHandler, error) {
+func NewAuthHandler(users *repository.UserRepository, sessions *repository.SessionRepository, posts *repository.PostRepository, secureCookies bool) (*AuthHandler, error) {
 	tmpl, err := template.ParseGlob("web/templates/*.html")
 	if err != nil {
 		return nil, fmt.Errorf("parse templates: %w", err)
@@ -60,6 +66,7 @@ func NewAuthHandler(users *repository.UserRepository, sessions *repository.Sessi
 	return &AuthHandler{
 		users:         users,
 		sessions:      sessions,
+		posts:         posts,
 		tmpl:          tmpl,
 		secureCookies: secureCookies,
 		dummyHash:     dummyHash,
@@ -241,10 +248,27 @@ func (h *AuthHandler) Protected(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	count, err := h.posts.CountByUser(r.Context(), s.UserId)
+	if err != nil {
+		log.Printf("count posts: %v", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	recent, err := h.posts.List(r.Context(), s.UserId, 3, 0)
+	if err != nil {
+		log.Printf("list recent posts: %v", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
 	h.render(w, http.StatusOK, "protected.html", pageData{
-		UserId:    s.UserId,
-		Email:     user.Email,
-		CSRFToken: s.CSRFToken,
-		ExpiresAt: s.ExpiresAt,
+		UserId:      s.UserId,
+		Email:       user.Email,
+		CSRFToken:   s.CSRFToken,
+		ExpiresAt:   s.ExpiresAt,
+		MemberSince: user.CreatedAt,
+		PostCount:   count,
+		RecentPosts: recent,
 	})
 }

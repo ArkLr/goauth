@@ -31,9 +31,13 @@ func main() {
 
 	userRepo := repository.NewUserRepository(pool)
 	sessionRepo := repository.NewSessionRepository(pool)
-	auth, err := handlers.NewAuthHandler(userRepo, sessionRepo, cfg.CookieSecure)
-
 	postRepo := repository.NewPostRepository(pool)
+
+	auth, err := handlers.NewAuthHandler(userRepo, sessionRepo, postRepo, cfg.CookieSecure)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	posts, err := handlers.NewPostHandler(postRepo)
 	if err != nil {
 		log.Fatal(err)

@@ -32,7 +32,7 @@
 				</div>
 				{{end}}
 
-				<form method="POST" action="/posts">
+				<form id="compose" method="POST" action="/posts">
 					<input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
 
 					<div class="field">
@@ -50,28 +50,59 @@
 			</div>
 
 			<div class="card-section">
+				<div class="list-header">
+					<span class="list-count">{{len .Posts}} {{if eq (len .Posts) 1}}post{{else}}posts{{end}}</span>
+					<nav class="tabs" aria-label="Filter posts">
+						<a href="/posts" {{if not .Mine}}class="is-active" aria-current="page"{{end}}>All</a>
+						<a href="/posts?filter=mine" {{if .Mine}}class="is-active" aria-current="page"{{end}}>Mine</a>
+					</nav>
+				</div>
+
 				{{range .Posts}}
 				<article class="post">
+					<header class="post-head">
+						<div class="post-avatar" aria-hidden="true">{{slice .AuthorEmail 0 1}}</div>
+						<div class="post-author">
+							<div class="post-author-name">
+								<span>{{.AuthorEmail}}</span>
+								{{if eq .UserId $.CurrentUserId}}<span class="pill">You</span>{{end}}
+							</div>
+							<time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">
+								{{.CreatedAt.Format "Jan 2, 2006 · 15:04"}}{{if ne .UpdatedAt .CreatedAt}} · edited{{end}}
+							</time>
+						</div>
+					</header>
+
 					<h2>{{.Headline}}</h2>
 					<p class="post-body">{{.Body}}</p>
-					<div class="post-meta">
-						<span>
-							User #{{.UserId}} · {{.CreatedAt.Format "Jan 2, 2006 · 15:04"}}{{if ne .UpdatedAt .CreatedAt}} · edited{{end}}
-						</span>
 
-						{{if eq .UserId $.CurrentUserId}}
-						<div class="post-actions">
-							<a href="/posts/{{.Id}}/edit" class="btn btn-outline btn-sm">Edit</a>
-							<form method="POST" action="/posts/{{.Id}}/delete" onsubmit="return confirm('Delete this post?');">
-								<input type="hidden" name="csrf_token" value="{{$.CSRFToken}}" />
-								<button type="submit" class="btn btn-outline btn-sm btn-danger">Delete</button>
-							</form>
-						</div>
-						{{end}}
+					{{if eq .UserId $.CurrentUserId}}
+					<div class="post-actions">
+						<a href="/posts/{{.Id}}/edit" class="btn btn-outline btn-sm">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M12 20h9" />
+								<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+							</svg>
+							Edit
+						</a>
+						<form method="POST" action="/posts/{{.Id}}/delete" onsubmit="return confirm('Delete this post?');">
+							<input type="hidden" name="csrf_token" value="{{$.CSRFToken}}" />
+							<button type="submit" class="btn btn-outline btn-sm btn-danger">
+								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M3 6h18" />
+									<path d="M8 6V4h8v2" />
+									<path d="m19 6-1 14H6L5 6" />
+								</svg>
+								Delete
+							</button>
+						</form>
 					</div>
+					{{end}}
 				</article>
 				{{else}}
-				<p class="empty">No posts yet. Be the first to write one.</p>
+				<p class="empty">
+					{{if .Mine}}You haven't posted anything yet.{{else}}No posts yet. Be the first to write one.{{end}}
+				</p>
 				{{end}}
 			</div>
 		</main>

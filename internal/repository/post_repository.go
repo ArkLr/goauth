@@ -58,10 +58,18 @@ func (r *PostRepository) GetByID(ctx context.Context, id int64) (*models.Post, e
 	return p, nil
 }
 
-func (r *PostRepository) List(ctx context.Context, limit, offset int) ([]models.Post, error) {
-	const q = `SELECT ` + postCols + ` FROM posts ORDER BY created_at DESC LIMIT $1 OFFSET $2`
+// List returns posts newest first along with their author's email.
+// If userID is non-zero, only that user's posts are returned.
+func (r *PostRepository) List(ctx context.Context, userID int64, limit, offset int) ([]models.Post, error) {
+	const q = `
+		SELECT p.id, p.user_id, p.headline, p.body, p.created_at, p.updated_at, u.email
+		FROM posts p
+		JOIN users u ON u.id = p.user_id
+		WHERE $1::bigint = 0 OR p.user_id = $1::bigint
+		ORDER BY p.created_at DESC
+		LIMIT $2 OFFSET $3`
 
-	rows, err := r.db.Query(ctx, q, limit, offset)
+	rows, err := r.db.Query(ctx, q, userID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("list posts: %w", err)
 	}
@@ -70,12 +78,22 @@ func (r *PostRepository) List(ctx context.Context, limit, offset int) ([]models.
 	var posts []models.Post
 	for rows.Next() {
 		var p models.Post
-		if err := rows.Scan(&p.Id, &p.UserId, &p.Headline, &p.Body, &p.CreatedAt, &p.UpdatedAt); err != nil {
+		if err := rows.Scan(&p.Id, &p.UserId, &p.Headline, &p.Body, &p.CreatedAt, &p.UpdatedAt, &p.AuthorEmail); err != nil {
 			return nil, fmt.Errorf("scan post: %w", err)
 		}
 		posts = append(posts, p)
 	}
 	return posts, rows.Err()
+}
+
+func (r *PostRepository) CountByUser(ctx context.Context, userID int64) (int64, error) {
+	const q = `SELECT count(*) FROM posts WHERE user_id = $1`
+
+	var n int64
+	if err := r.db.QueryRow(ctx, q, userID).Scan(&n); err != nil {
+		return 0, fmt.Errorf("count posts: %w", err)
+	}
+	return n, nil
 }
 
 // Update changes a post only if it belongs to userID.

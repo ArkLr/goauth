@@ -27,6 +27,7 @@ type postsPageData struct {
 	CSRFToken     string
 	CurrentUserId int64
 	Posts         []models.Post
+	Mine          bool         // list shows only the current user's posts
 	Post          *models.Post // used by the edit page
 	Headline      string
 	Body          string
@@ -89,7 +90,14 @@ func validate(r *http.Request) (headline, body, msg string) {
 }
 
 func (h *PostHandler) showList(w http.ResponseWriter, r *http.Request, s *models.Session, status int, errMsg, headline, body string) {
-	list, err := h.posts.List(r.Context(), pageSize, 0)
+	// ?filter=mine narrows the list to the current user's posts.
+	mine := r.URL.Query().Get("filter") == "mine"
+	var authorID int64
+	if mine {
+		authorID = s.UserId
+	}
+
+	list, err := h.posts.List(r.Context(), authorID, pageSize, 0)
 	if err != nil {
 		log.Printf("list posts: %v", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
@@ -100,6 +108,7 @@ func (h *PostHandler) showList(w http.ResponseWriter, r *http.Request, s *models
 		CSRFToken:     s.CSRFToken,
 		CurrentUserId: s.UserId,
 		Posts:         list,
+		Mine:          mine,
 		Headline:      headline,
 		Body:          body,
 	})

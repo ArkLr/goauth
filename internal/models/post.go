@@ -11,4 +11,6 @@ type Post struct {
 	Body      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+
+	AuthorEmail string // filled by List only
 }
