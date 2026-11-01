@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Posts</title>
+		<link rel="stylesheet" href="/static/style.css" />
+	</head>
+	<body>
+		<main class="card wide">
+			<h1>Posts</h1>
+			<p><a href="/protected">Dashboard</a></p>
+
+			{{with .Error}}
+			<p class="error">{{.}}</p>
+			{{end}}
+
+			<form method="POST" action="/posts">
+				<input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
+				<input
+					type="text"
+					name="headline"
+					placeholder="Headline"
+					maxlength="200"
+					value="{{.Headline}}"
+					required
+				/>
+				<textarea name="body" placeholder="..." rows="4" required>
+{{.Body}}</textarea
+				>
+				<button type="submit" class="btn">Post</button>
+			</form>
+
+			<hr />
+
+			{{range .Posts}}
+			<article>
+				<h2>{{.Headline}}</h2>
+				<p>{{.Body}}</p>
+				<small>
+					by user #{{.UserId}} · {{.CreatedAt.Format "Jan 2, 2006 15:04"}} {{if
+					ne .UpdatedAt .CreatedAt}}(edited){{end}}
+				</small>
+
+				{{if eq .UserId $.CurrentUserId}}
+				<div>
+					<a href="/posts/{{.Id}}/edit">Edit</a>
+					<form
+						method="POST"
+						action="/posts/{{.Id}}/delete"
+						style="display: inline"
+						onsubmit="return confirm('Delete this post?');"
+					>
+						<input type="hidden" name="csrf_token" value="{{$.CSRFToken}}" />
+						<button type="submit" class="btn btn-outline">Delete</button>
+					</form>
+				</div>
+				{{end}}
+			</article>
+			{{else}}
+			<p>No posts yet.</p>
+			{{end}}
+		</main>
+	</body>
+</html>

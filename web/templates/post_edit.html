@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Edit post · GoAuth</title>
+		<link rel="stylesheet" href="/static/style.css" />
+	</head>
+	<body>
+		<main class="card wide">
+			<h1>Edit post</h1>
+			<p><a href="/posts">Back to posts</a></p>
+
+			{{with .Error}}
+			<p class="error">{{.}}</p>
+			{{end}}
+
+			<form method="POST" action="/posts/{{.Post.Id}}">
+				<input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
+				<input
+					type="text"
+					name="headline"
+					maxlength="200"
+					value="{{.Headline}}"
+					required
+				/>
+				<textarea name="body" rows="8" required>{{.Body}}</textarea>
+				<button type="submit" class="btn">Save</button>
+			</form>
+		</main>
+	</body>
+</html>

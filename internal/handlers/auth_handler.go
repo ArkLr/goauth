@@ -110,10 +110,12 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		fail(http.StatusBadRequest, "invalid email")
 		return
 	}
+
 	if len(password) < 8 {
 		fail(http.StatusBadRequest, "password must be at least 8 characters")
 		return
 	}
+
 	if len(password) > 72 {
 		fail(http.StatusBadRequest, "password must be at most 72 bytes")
 		return

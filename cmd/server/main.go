@@ -32,11 +32,18 @@ func main() {
 	userRepo := repository.NewUserRepository(pool)
 	sessionRepo := repository.NewSessionRepository(pool)
 	auth, err := handlers.NewAuthHandler(userRepo, sessionRepo, cfg.CookieSecure)
+
+	postRepo := repository.NewPostRepository(pool)
+	posts, err := handlers.NewPostHandler(postRepo)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	requireAuth := middleware.RequireAuth(sessionRepo, cfg.CookieSecure)
+
+	protect := func(h http.HandlerFunc) http.Handler {
+		return requireAuth(middleware.RequireCSRF(h))
+	}
 
 	mux := http.NewServeMux()
 
@@ -57,6 +64,13 @@ func main() {
 
 	// protected
 	mux.Handle("GET /protected", requireAuth(http.HandlerFunc(auth.Protected)))
+
+	mux.Handle("GET /posts", requireAuth(http.HandlerFunc(posts.List)))
+	mux.Handle("POST /posts", protect(posts.Create))
+	mux.Handle("GET /posts/{id}/edit", requireAuth(http.HandlerFunc(posts.EditPage)))
+	mux.Handle("POST /posts/{id}", protect(posts.Update))
+	mux.Handle("POST /posts/{id}/delete", protect(posts.Delete))
+
 	log.Println("listening on :8080", addr)
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
