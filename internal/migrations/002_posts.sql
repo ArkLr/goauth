@@ -1,12 +1,11 @@
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS posts (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-       user_id    BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id    BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     headline   TEXT        NOT NULL CHECK (char_length(headline) BETWEEN 1 AND 200),
     body       TEXT        NOT NULL CHECK (char_length(body) BETWEEN 1 AND 10000),
-    status post_status NOT NULL DEFAULT "created",
-    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
