@@ -107,6 +107,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	email := strings.ToLower(strings.TrimSpace(r.FormValue("email")))
 	password := r.FormValue("password")
+	confirm := r.FormValue("confirm_password")
 
 	fail := func(status int, msg string) {
 		h.render(w, status, "register.html", pageData{Error: msg, Email: email})
@@ -125,6 +126,11 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	if len(password) > 72 {
 		fail(http.StatusBadRequest, "password must be at most 72 bytes")
+		return
+	}
+
+	if confirm != password {
+		fail(http.StatusBadRequest, "Passwords do not match")
 		return
 	}
 

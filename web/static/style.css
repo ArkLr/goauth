@@ -252,7 +252,10 @@ textarea::placeholder {
 }
 
 /* Only one of the two icons is visible at a time. */
-.toggle-password .icon-hide,
+.toggle-password .icon-hide {
+	display: none;
+}
+
 .toggle-password.is-visible .icon-show {
 	display: none;
 }
