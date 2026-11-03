@@ -72,8 +72,20 @@ func main() {
 	})
 
 	// ---- React app (built by `npm run build` in web/) ----
-	mux.Handle("GET /", spa.Handler("web/dist"))
+	spaHandler := spa.Handler("web/dist")
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		spaHandler.ServeHTTP(w, r)
+	})
 
 	log.Println("listening on :8080", addr)
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
+
+// How to run it
+// - For development, use two terminals. Open http://localhost:5173; Vite forwards /api calls to Go.
+// go run ./cmd/server          # terminal 1 (with your .env loaded)
+// cd web && npm run dev        # terminal 2
