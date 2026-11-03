@@ -5,12 +5,12 @@ import (
 )
 
 type Post struct {
-	Id        int64
-	UserId    int64
-	Headline  string
-	Body      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Id        int64     `json:"id"`
+	UserId    int64     `json:"userId"`
+	Headline  string    `json:"headline"`
+	Body      string    `json:"body"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 
-	AuthorEmail string // filled by List only
+	AuthorEmail string `json:"authorEmail,omitempty"` // filled by List only
 }

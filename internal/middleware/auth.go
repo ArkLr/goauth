@@ -2,10 +2,10 @@ package middleware
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/Arklr/goauth/internal/cookies"
 	"github.com/Arklr/goauth/internal/models"
@@ -25,11 +25,7 @@ func SessionFromContext(ctx context.Context) (*models.Session, bool) {
 
 func RequireAuth(sessions *repository.SessionRepository, secure bool) func(http.Handler) http.Handler {
 	deny := func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.Header.Get("Accept"), "text/html") {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			return
-		}
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		jsonError(w, http.StatusUnauthorized, "unauthorized")
 	}
 
 	return func(next http.Handler) http.Handler {
@@ -48,7 +44,7 @@ func RequireAuth(sessions *repository.SessionRepository, secure bool) func(http.
 					return
 				}
 				log.Printf("get session: %v", err)
-				http.Error(w, "internal error", http.StatusInternalServerError)
+				jsonError(w, http.StatusInternalServerError, "internal error")
 				return
 			}
 
@@ -56,4 +52,11 @@ func RequireAuth(sessions *repository.SessionRepository, secure bool) func(http.
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+// jsonError writes {"error": msg} with the given status.
+func jsonError(w http.ResponseWriter, status int, msg string) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }

@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+/* Same palette as the old style.css, exposed as Tailwind colors:
+   bg-card, border-line, text-muted, bg-primary, ... */
+@theme {
+	--font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+	--color-page: #2a2a2a;
+	--color-card: #1f1f1f;
+	--color-card-line: #303030;
+	--color-line: #3a3a3a;
+	--color-line-hover: #4a4a4a;
+	--color-fg: #ededed;
+	--color-muted: #a1a1a1;
+	--color-placeholder: #6e6e6e;
+	--color-surface: #262626;
+	--color-primary: #f0f0f0;
+	--color-primary-hover: #ffffff;
+	--color-primary-fg: #1a1a1a;
+	--color-ring: rgb(255 255 255 / 0.12);
+	--color-error-text: #f8a5a5;
+	--color-success-text: #86efac;
+
+	--radius-card: 24px;
+	--radius-field: 12px;
+
+	--animate-rise: rise 0.3s ease-out;
+	@keyframes rise {
+		from { opacity: 0; transform: translateY(6px); }
+		to { opacity: 1; transform: translateY(0); }
+	}
+}
+
+:root {
+	color-scheme: dark;
+}
+
+body {
+	@apply bg-page font-sans text-[15px] text-fg antialiased;
+}

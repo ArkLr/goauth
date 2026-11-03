@@ -1,59 +1,36 @@
 package handlers
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"net/mail"
 	"strings"
 	"time"
 
-	"github.com/Arklr/goauth/internal/middleware"
+	"github.com/Arklr/goauth/internal/cookies"
 	"github.com/Arklr/goauth/internal/models"
 	"github.com/Arklr/goauth/internal/repository"
 	"github.com/Arklr/goauth/internal/security"
 	"golang.org/x/crypto/bcrypt"
-
-	"github.com/Arklr/goauth/internal/cookies"
 )
 
 const (
 	sessionTTL      = 24 * time.Hour
 	msgInvalidLogin = "invalid email or password"
+	msgInternal     = "something went wrong, try again"
 )
-
-type pageData struct {
-	Error     string
-	Email     string
-	Success   string
-	CSRFToken string
-	ExpiresAt time.Time
-	UserId    int64
-
-	// dashboard only
-	MemberSince time.Time
-	PostCount   int64
-	RecentPosts []models.Post
-}
 
 type AuthHandler struct {
 	users         *repository.UserRepository
 	sessions      *repository.SessionRepository
 	posts         *repository.PostRepository
-	tmpl          *template.Template
 	secureCookies bool
 	dummyHash     []byte
 }
 
 func NewAuthHandler(users *repository.UserRepository, sessions *repository.SessionRepository, posts *repository.PostRepository, secureCookies bool) (*AuthHandler, error) {
-	tmpl, err := template.ParseGlob("web/templates/*.html")
-	if err != nil {
-		return nil, fmt.Errorf("parse templates: %w", err)
-	}
-
 	dummy, err := security.GenerateToken()
 	if err != nil {
 		return nil, err
@@ -67,110 +44,82 @@ func NewAuthHandler(users *repository.UserRepository, sessions *repository.Sessi
 		users:         users,
 		sessions:      sessions,
 		posts:         posts,
-		tmpl:          tmpl,
 		secureCookies: secureCookies,
 		dummyHash:     dummyHash,
 	}, nil
 }
 
-func (h *AuthHandler) render(w http.ResponseWriter, status int, name string, data pageData) {
-	var buf bytes.Buffer
-	if err := h.tmpl.ExecuteTemplate(&buf, name, data); err != nil {
-		log.Printf("render %s: %v", name, err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(status)
-	buf.WriteTo(w)
+type registerRequest struct {
+	Email           string `json:"email"`
+	Password        string `json:"password"`
+	ConfirmPassword string `json:"confirmPassword"`
 }
 
-func (h *AuthHandler) RegisterPage(w http.ResponseWriter, r *http.Request) {
-	h.render(w, http.StatusOK, "register.html", pageData{})
-}
-
-func (h *AuthHandler) LoginPage(w http.ResponseWriter, r *http.Request) {
-	data := pageData{}
-	if r.URL.Query().Get("registered") == "1" {
-		data.Success = "Account created. Please log in."
-	}
-	h.render(w, http.StatusOK, "login.html", data)
-}
-
+// Register handles POST /api/register.
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
-
-	if err := r.ParseForm(); err != nil {
-		h.render(w, http.StatusBadRequest, "register.html", pageData{Error: "invalid form data"})
+	var req registerRequest
+	if err := readJSON(w, r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	email := strings.ToLower(strings.TrimSpace(r.FormValue("email")))
-	password := r.FormValue("password")
-	confirm := r.FormValue("confirm_password")
-
-	fail := func(status int, msg string) {
-		h.render(w, status, "register.html", pageData{Error: msg, Email: email})
-	}
+	email := strings.ToLower(strings.TrimSpace(req.Email))
 
 	addr, err := mail.ParseAddress(email)
 	if err != nil || addr.Address != email {
-		fail(http.StatusBadRequest, "invalid email")
+		writeError(w, http.StatusBadRequest, "invalid email")
+		return
+	}
+	if len(req.Password) < 8 {
+		writeError(w, http.StatusBadRequest, "password must be at least 8 characters")
+		return
+	}
+	if len(req.Password) > 72 {
+		writeError(w, http.StatusBadRequest, "password must be at most 72 bytes")
+		return
+	}
+	if req.ConfirmPassword != req.Password {
+		writeError(w, http.StatusBadRequest, "passwords do not match")
 		return
 	}
 
-	if len(password) < 8 {
-		fail(http.StatusBadRequest, "password must be at least 8 characters")
-		return
-	}
-
-	if len(password) > 72 {
-		fail(http.StatusBadRequest, "password must be at most 72 bytes")
-		return
-	}
-
-	if confirm != password {
-		fail(http.StatusBadRequest, "Passwords do not match")
-		return
-	}
-
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Printf("bcrypt: %v", err)
-		fail(http.StatusInternalServerError, "something went wrong, try again")
+		writeError(w, http.StatusInternalServerError, msgInternal)
 		return
 	}
 
 	if _, err := h.users.Create(r.Context(), email, string(hash)); err != nil {
 		if errors.Is(err, repository.ErrEmailTaken) {
-			fail(http.StatusConflict, "email already taken")
+			writeError(w, http.StatusConflict, "email already taken")
 			return
 		}
 		log.Printf("create user: %v", err)
-		fail(http.StatusInternalServerError, "something went wrong, try again")
+		writeError(w, http.StatusInternalServerError, msgInternal)
 		return
 	}
 
-	http.Redirect(w, r, "/login?registered=1", http.StatusSeeOther)
+	writeJSON(w, http.StatusCreated, nil)
 }
 
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+type loginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
 
-	if err := r.ParseForm(); err != nil {
-		h.render(w, http.StatusBadRequest, "login.html", pageData{Error: "invalid form data"})
+// Login handles POST /api/login. On success it sets the session cookie;
+// the client then calls GET /api/me to load the user and CSRF token.
+func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var req loginRequest
+	if err := readJSON(w, r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	email := strings.ToLower(strings.TrimSpace(r.FormValue("email")))
-	password := r.FormValue("password")
-
-	fail := func(status int, msg string) {
-		h.render(w, status, "login.html", pageData{Error: msg, Email: email})
-	}
-
-	if email == "" || password == "" {
-		fail(http.StatusBadRequest, "email and password are required")
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+	if email == "" || req.Password == "" {
+		writeError(w, http.StatusBadRequest, "email and password are required")
 		return
 	}
 
@@ -183,26 +132,26 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		// keep the dummy hash so timing stays similar
 	default:
 		log.Printf("get user: %v", err)
-		fail(http.StatusInternalServerError, "something went wrong, try again")
+		writeError(w, http.StatusInternalServerError, msgInternal)
 		return
 	}
 
-	cmpErr := bcrypt.CompareHashAndPassword(hash, []byte(password))
+	cmpErr := bcrypt.CompareHashAndPassword(hash, []byte(req.Password))
 	if err != nil || cmpErr != nil {
-		fail(http.StatusUnauthorized, msgInvalidLogin)
+		writeError(w, http.StatusUnauthorized, msgInvalidLogin)
 		return
 	}
 
 	token, err := security.GenerateToken()
 	if err != nil {
 		log.Printf("generate token: %v", err)
-		fail(http.StatusInternalServerError, "something went wrong, try again")
+		writeError(w, http.StatusInternalServerError, msgInternal)
 		return
 	}
 	csrfToken, err := security.GenerateToken()
 	if err != nil {
 		log.Printf("generate csrf token: %v", err)
-		fail(http.StatusInternalServerError, "something went wrong, try again")
+		writeError(w, http.StatusInternalServerError, msgInternal)
 		return
 	}
 
@@ -215,66 +164,87 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Printf("create session: %v", err)
-		fail(http.StatusInternalServerError, "something went wrong, try again")
+		writeError(w, http.StatusInternalServerError, msgInternal)
 		return
 	}
 
 	cookies.SetSession(w, token, expires, h.secureCookies)
-	http.Redirect(w, r, "/protected", http.StatusSeeOther)
+	writeJSON(w, http.StatusNoContent, nil)
 }
 
+// Logout handles POST /api/logout (auth + CSRF protected).
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	if c, err := r.Cookie(cookies.SessionName); err == nil && c.Value != "" {
 		if err := h.sessions.Delete(r.Context(), security.HashToken(c.Value)); err != nil {
 			log.Printf("delete session: %v", err)
-			http.Error(w, "internal error", http.StatusInternalServerError)
+			writeError(w, http.StatusInternalServerError, msgInternal)
 			return
 		}
 	}
 
 	cookies.ClearSession(w, h.secureCookies)
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	writeJSON(w, http.StatusNoContent, nil)
 }
 
-func (h *AuthHandler) Protected(w http.ResponseWriter, r *http.Request) {
-	s, ok := middleware.SessionFromContext(r.Context())
+type meResponse struct {
+	User      *models.User `json:"user"`
+	CSRFToken string       `json:"csrfToken"`
+	ExpiresAt time.Time    `json:"expiresAt"`
+}
+
+// Me handles GET /api/me: the current user, session expiry and CSRF token.
+func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
+	s, ok := session(w, r)
 	if !ok {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 
 	user, err := h.users.GetByID(r.Context(), s.UserId)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			writeError(w, http.StatusUnauthorized, "unauthorized")
 			return
 		}
 		log.Printf("get user by id: %v", err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, msgInternal)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, meResponse{
+		User:      user,
+		CSRFToken: s.CSRFToken,
+		ExpiresAt: s.ExpiresAt,
+	})
+}
+
+type dashboardResponse struct {
+	PostCount   int64         `json:"postCount"`
+	RecentPosts []models.Post `json:"recentPosts"`
+}
+
+// Dashboard handles GET /api/dashboard.
+func (h *AuthHandler) Dashboard(w http.ResponseWriter, r *http.Request) {
+	s, ok := session(w, r)
+	if !ok {
 		return
 	}
 
 	count, err := h.posts.CountByUser(r.Context(), s.UserId)
 	if err != nil {
 		log.Printf("count posts: %v", err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, msgInternal)
 		return
 	}
 
 	recent, err := h.posts.List(r.Context(), s.UserId, 3, 0)
 	if err != nil {
 		log.Printf("list recent posts: %v", err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, msgInternal)
 		return
 	}
 
-	h.render(w, http.StatusOK, "protected.html", pageData{
-		UserId:      s.UserId,
-		Email:       user.Email,
-		CSRFToken:   s.CSRFToken,
-		ExpiresAt:   s.ExpiresAt,
-		MemberSince: user.CreatedAt,
+	writeJSON(w, http.StatusOK, dashboardResponse{
 		PostCount:   count,
-		RecentPosts: recent,
+		RecentPosts: nonNil(recent),
 	})
 }
