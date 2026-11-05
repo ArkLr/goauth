@@ -2,7 +2,17 @@ import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { errorMessage } from "../api";
 import { useAuth } from "../auth";
-import { Alert, Button, Card, CardBody, CardFooter, Field, Input, PasswordInput, Title } from "../components/ui";
+import {
+	Alert,
+	Button,
+	Card,
+	CardBody,
+	CardFooter,
+	Field,
+	Input,
+	PasswordInput,
+	Title,
+} from "../components/ui";
 
 export default function Login() {
 	const { login } = useAuth();
@@ -36,49 +46,53 @@ export default function Login() {
 	}
 
 	return (
-		<Card>
-			<CardBody>
-				<Title subtitle="Enter your email and password to continue.">Sign in to GoAuth</Title>
+		<div className="flex w-full items-center justify-center">
+			<Card>
+				<CardBody>
+					<Title subtitle="Enter your email and password to continue.">
+						Sign in to GoAuth
+					</Title>
 
-				<Alert>{error}</Alert>
-				{!error && params.get("registered") === "1" && (
-					<Alert kind="success">Account created. Please log in.</Alert>
-				)}
+					<Alert>{error}</Alert>
+					{!error && params.get("registered") === "1" && (
+						<Alert kind="success">Account created. Please log in.</Alert>
+					)}
 
-				<form onSubmit={onSubmit} noValidate>
-					<Field label="Email" htmlFor="email">
-						<Input
-							type="email"
-							id="email"
-							value={email}
-							onChange={(e) => setEmail(e.target.value)}
-							placeholder="name@example.com"
-							autoComplete="email"
-							required
-							autoFocus
-						/>
-					</Field>
+					<form onSubmit={onSubmit} noValidate>
+						<Field label="Email" htmlFor="email">
+							<Input
+								type="email"
+								id="email"
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+								placeholder="name@example.com"
+								autoComplete="email"
+								required
+								autoFocus
+							/>
+						</Field>
 
-					<Field label="Password" htmlFor="password">
-						<PasswordInput
-							id="password"
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							placeholder="Enter your password"
-							autoComplete="current-password"
-							required
-						/>
-					</Field>
+						<Field label="Password" htmlFor="password">
+							<PasswordInput
+								id="password"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								placeholder="Enter your password"
+								autoComplete="current-password"
+								required
+							/>
+						</Field>
 
-					<Button type="submit" block disabled={busy}>
-						{busy ? "Signing in…" : "Continue"}
-					</Button>
-				</form>
-			</CardBody>
+						<Button type="submit" block disabled={busy}>
+							{busy ? "Signing in…" : "Continue"}
+						</Button>
+					</form>
+				</CardBody>
 
-			<CardFooter>
-				No account? <Link to="/register">Sign up</Link>
-			</CardFooter>
-		</Card>
+				<CardFooter>
+					No account? <Link to="/register">Sign up</Link>
+				</CardFooter>
+			</Card>
+		</div>
 	);
 }
