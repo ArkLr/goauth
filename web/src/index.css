@@ -1,9 +1,12 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 /* Same palette as the old style.css, exposed as Tailwind colors:
    bg-card, border-line, text-muted, bg-primary, ... */
 @theme {
-	--font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	--font-sans:
+		"Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+		"Helvetica Neue", Arial, sans-serif;
 
 	--color-page: #2a2a2a;
 	--color-card: #1f1f1f;
@@ -26,8 +29,14 @@
 
 	--animate-rise: rise 0.3s ease-out;
 	@keyframes rise {
-		from { opacity: 0; transform: translateY(6px); }
-		to { opacity: 1; transform: translateY(0); }
+		from {
+			opacity: 0;
+			transform: translateY(6px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
 	}
 }
 
@@ -37,4 +46,29 @@
 
 body {
 	@apply bg-page font-sans text-[15px] text-fg antialiased;
+}
+
+.arc-dialog {
+	--surface-raised: var(--color-card);
+	--surface-muted: var(--color-surface);
+	--foreground: var(--color-fg);
+	--text-secondary: var(--color-muted);
+	--border: var(--color-line);
+	--radius-control: var(--radius-field);
+	--radius-surface: 1rem;
+	--shadow-floating: 0 20px 48px oklch(0% 0 0 / 0.4);
+	--font-body: var(--font-sans);
+	--space-2: 0.5rem;
+	--space-5: 1.25rem;
+	--space-6: 1.5rem;
+	--space-8: 2rem;
+	--text-sm: 0.875rem;
+	--text-lg: 1.125rem;
+	--leading-body: 1.4;
+	--tracking-body: -0.01em;
+	--duration-instant: 120ms;
+	--duration-fast: 160ms;
+	--duration-spring: 580ms;
+	--ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+	--ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
 }
