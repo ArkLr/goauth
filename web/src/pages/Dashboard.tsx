@@ -10,6 +10,7 @@ import {
 import { useAuth, useMe } from "../auth";
 import { ListIcon, LogOutIcon, PlusIcon, UserIcon } from "../components/icons";
 import { Alert, Button, ButtonLink } from "../components/ui";
+import GlyphMatrix from "@/components/glyph-matrix";
 
 export default function Dashboard() {
 	const me = useMe();
@@ -32,101 +33,119 @@ export default function Dashboard() {
 	}
 
 	return (
-		<div className="w-full max-w-full px-8 py-8">
-			<div className="mb-8 flex flex-col gap-4">
-				<div className="flex flex-row items-center gap-3">
-					<div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-line bg-surface">
-						<UserIcon size={24} />
-					</div>
-					<div className="min-w-0">
-						<h1 className="text-2xl font-medium tracking-[-0.02em]">
-							Username
-						</h1>
-						<p className="truncate text-sm text-muted">{me.user.email}</p>
-					</div>
-				</div>
-
-				<div className="flex flex-wrap gap-2">
-					<Stat label="Member since">
-						{formatDate(me.user.createdAt, false)}
-					</Stat>
-					<Stat label="Status">
-						<span className="inline-flex items-center gap-1.5 rounded-full border border-green-500/28 bg-green-500/8 px-2.5 py-0.5 text-xs font-medium text-success-text">
-							<span className="size-1.5 rounded-full bg-success-text" />
-							Active session
-						</span>
-					</Stat>
-					<Stat label="Session expires">{formatDate(me.expiresAt)}</Stat>
-					<Stat label="Number posts">{data ? data.postCount : "–"}</Stat>
-				</div>
-			</div>
-
-			<Alert>{error}</Alert>
-
-			{/* Quick actions */}
-			<div className="mb-2 flex flex-col w-full">
-				<SectionTitle>Actions</SectionTitle>
-				<div className="flex flex-row gap-2 w-full">
-					<Action to="/posts#compose" icon={<PlusIcon />} title="New post" />
-					<Action to="/posts" icon={<ListIcon />} title="All posts" />
-					<Action
-						to="/posts?filter=mine"
-						icon={<UserIcon />}
-						title="My posts"
-					/>
-				</div>
-			</div>
-
-			{/* Recent posts */}
-			<div className="flex items-baseline justify-between mt-4">
-				<SectionTitle>Your recent posts</SectionTitle>
-				{data && data.recentPosts.length > 0 && (
-					<Link
-						to="/posts?filter=mine"
-						className="text-sm text-muted hover:text-fg"
-					>
-						View all
-					</Link>
-				)}
-			</div>
-			<ul className="mb-8 divide-y divide-card-line overflow-hidden rounded-field border border-line">
-				{data?.recentPosts.map((p) => (
-					<li
-						key={p.id}
-						className="flex items-center justify-between gap-3 px-4 py-3"
-					>
-						<div className="min-w-0">
-							<div className="truncate font-medium">{p.headline}</div>
-							<div className="text-xs text-muted">
-								{formatDate(p.createdAt)}
-								{isEdited(p) && " · edited"}
-							</div>
+		<div className="w-full max-w-full">
+			<div className="px-8 py-8">
+				<div className="mb-8 flex flex-col gap-4">
+					<div className="flex flex-row items-center gap-3">
+						<div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-line bg-surface">
+							<UserIcon size={24} />
 						</div>
-						<ButtonLink to={`/posts/${p.id}/edit`} small>
-							Edit
-						</ButtonLink>
-					</li>
-				))}
-				{data && data.recentPosts.length === 0 && (
-					<li className="px-4 py-5 text-sm text-muted">
-						Nothing yet.{" "}
-						<Link
-							to="/posts#compose"
-							className="font-semibold text-fg hover:underline"
-						>
-							Write your first post
-						</Link>
-					</li>
-				)}
-				{!data && !error && (
-					<li className="px-4 py-5 text-sm text-muted">Loading…</li>
-				)}
-			</ul>
+						<div className="min-w-0">
+							<h1 className="text-2xl font-medium tracking-[-0.02em]">
+								Username
+							</h1>
+							<p className="truncate text-sm text-muted">{me.user.email}</p>
+						</div>
+					</div>
 
-			<Button variant="outline" onClick={onLogout}>
-				<LogOutIcon />
-				Sign out
-			</Button>
+					<div className="flex flex-wrap gap-2">
+						<Stat label="Member since">
+							{formatDate(me.user.createdAt, false)}
+						</Stat>
+						<Stat label="Status">
+							<span className="inline-flex items-center gap-1.5 rounded-full border border-green-500/28 bg-green-500/8 px-2.5 py-0.5 text-xs font-medium text-success-text">
+								<span className="size-1.5 rounded-full bg-success-text" />
+								Active session
+							</span>
+						</Stat>
+						<Stat label="Session expires">{formatDate(me.expiresAt)}</Stat>
+						<Stat label="Number posts">{data ? data.postCount : "–"}</Stat>
+					</div>
+				</div>
+
+				<Alert>{error}</Alert>
+
+				{/* Quick actions */}
+				<div className="mb-2 flex w-full flex-col">
+					<SectionTitle>Actions</SectionTitle>
+					<div className="flex w-full flex-row gap-2">
+						<Action to="/posts#compose" icon={<PlusIcon />} title="New post" />
+						<Action to="/posts" icon={<ListIcon />} title="All posts" />
+						<Action
+							to="/posts?filter=mine"
+							icon={<UserIcon />}
+							title="My posts"
+						/>
+					</div>
+				</div>
+
+				{/* Recent posts */}
+				<div className="mt-4 flex items-baseline justify-between">
+					<SectionTitle>Your recent posts</SectionTitle>
+					{data && data.recentPosts.length > 0 && (
+						<Link
+							to="/posts?filter=mine"
+							className="text-sm text-muted hover:text-fg"
+						>
+							View all
+						</Link>
+					)}
+				</div>
+				<ul className="mb-8 divide-y divide-card-line overflow-hidden rounded-field border border-line">
+					{data?.recentPosts.map((p) => (
+						<li
+							key={p.id}
+							className="flex items-center justify-between gap-3 px-4 py-3"
+						>
+							<div className="min-w-0">
+								<div className="truncate font-medium">{p.headline}</div>
+								<div className="text-xs text-muted">
+									{formatDate(p.createdAt)}
+									{isEdited(p) && " · edited"}
+								</div>
+							</div>
+							<ButtonLink to={`/posts/${p.id}/edit`} small>
+								Edit
+							</ButtonLink>
+						</li>
+					))}
+					{data && data.recentPosts.length === 0 && (
+						<li className="px-4 py-5 text-sm text-muted">
+							Nothing yet.{" "}
+							<Link
+								to="/posts#compose"
+								className="font-semibold text-fg hover:underline"
+							>
+								Write your first post
+							</Link>
+						</li>
+					)}
+					{!data && !error && (
+						<li className="px-4 py-5 text-sm text-muted">Loading…</li>
+					)}
+				</ul>
+
+				<Button variant="outline" onClick={onLogout}>
+					<LogOutIcon />
+					Sign out
+				</Button>
+			</div>
+
+			{/* Pinned to the viewport bottom: takes no space in the layout */}
+			<div
+				aria-hidden="true"
+				className="pointer-events-none fixed inset-x-0 bottom-0 h-50 overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_60%)]"
+			>
+				<GlyphMatrix
+					className="block size-full"
+					glyphs="01.+*/<>="
+					cellSize={14}
+					mutationRate={0.04}
+					interval={90}
+					fadeBottom={0}
+					color="#6B7280"
+				/>
+			</div>
 		</div>
 	);
 }
@@ -162,9 +181,9 @@ function Action({
 	return (
 		<Link
 			to={to}
-			className="flex flex-row gap-2 items-center justify-center rounded-field border border-line bg-surface p-2.5 text-fg no-underline transition hover:border-line-hover"
+			className="flex flex-row items-center justify-center gap-2 rounded-field border border-line bg-surface p-2.5 text-fg no-underline transition hover:border-line-hover"
 		>
-			<span className=" flex size-8 items-center justify-center rounded-lg bg-card">
+			<span className="flex size-8 items-center justify-center rounded-lg bg-card">
 				{icon}
 			</span>
 			<span className="font-medium">{title}</span>
