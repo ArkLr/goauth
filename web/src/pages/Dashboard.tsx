@@ -32,7 +32,7 @@ export default function Dashboard() {
 	}
 
 	return (
-		<div className="w-full max-w-full  px-8 py-8">
+		<div className="w-full max-w-full px-8 py-8">
 			<div className="mb-8 flex flex-col gap-4">
 				<div className="flex flex-row items-center gap-3">
 					<div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-line bg-surface">
@@ -64,20 +64,21 @@ export default function Dashboard() {
 			<Alert>{error}</Alert>
 
 			{/* Quick actions */}
-			<div className="mb-8 flex w-full flex-col gap-4">
-				<SectionTitle>Quick actions</SectionTitle>
-				<Action to="/posts#compose" icon={<PlusIcon />} title="New post" />
-				<Action
-					to="/posts"
-					icon={<ListIcon />}
-					title="All posts"
-					desc="See what's new"
-				/>
-				<Action to="/posts?filter=mine" icon={<UserIcon />} title="My posts" />
+			<div className="mb-2 flex flex-col w-full">
+				<SectionTitle>Actions</SectionTitle>
+				<div className="flex flex-row gap-2 w-full">
+					<Action to="/posts#compose" icon={<PlusIcon />} title="New post" />
+					<Action to="/posts" icon={<ListIcon />} title="All posts" />
+					<Action
+						to="/posts?filter=mine"
+						icon={<UserIcon />}
+						title="My posts"
+					/>
+				</div>
 			</div>
 
 			{/* Recent posts */}
-			<div className="flex items-baseline justify-between">
+			<div className="flex items-baseline justify-between mt-4">
 				<SectionTitle>Your recent posts</SectionTitle>
 				{data && data.recentPosts.length > 0 && (
 					<Link
@@ -161,9 +162,9 @@ function Action({
 	return (
 		<Link
 			to={to}
-			className="flex flex-col gap-1 rounded-field border border-line bg-surface p-4 text-fg no-underline transition hover:border-line-hover"
+			className="flex flex-row gap-2 items-center justify-center rounded-field border border-line bg-surface p-2.5 text-fg no-underline transition hover:border-line-hover"
 		>
-			<span className="mb-1 flex size-8 items-center justify-center rounded-lg bg-card">
+			<span className=" flex size-8 items-center justify-center rounded-lg bg-card">
 				{icon}
 			</span>
 			<span className="font-medium">{title}</span>
